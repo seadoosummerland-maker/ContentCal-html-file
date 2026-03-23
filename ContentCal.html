@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ContentCal — AI Content Calendar</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#080B12;color:#F4F8FF;font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
+textarea,input,select,button{font-family:'Inter',sans-serif}
+input::placeholder,textarea::placeholder{color:#526070}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#080B12}::-webkit-scrollbar-thumb{background:#1E2A3D;border-radius:2px}
+select{appearance:none}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState}=React;
+
+const C={bg:"#080B12",surface:"#0F1420",surfaceUp:"#141B2B",border:"#1E2A3D",borderUp:"#28394F",text:"#F4F8FF",textSub:"#B8CCDE",textMuted:"#7A94AA",violet:"#7C6FF0",violetSoft:"#B0AAFF",violetDim:"#12103A",rose:"#F06090",roseDim:"#2A0F1A",teal:"#30C8D0",green:"#38D490",greenDim:"#061E12",youtube:"#F04040"};
+
+const PC={"Instagram":"#F06090","LinkedIn":"#7C6FF0","Twitter/X":"#30C8D0","TikTok":"#C0D0E0","Facebook":"#4A8AF0","YouTube":"#F04040"};
+const PI={"Instagram":"◈","LinkedIn":"in","Twitter/X":"𝕏","TikTok":"♪","Facebook":"f","YouTube":"▶"};
+const PLATFORMS=["Instagram","LinkedIn","Twitter/X","TikTok","Facebook","YouTube"];
+const GOALS=["Brand Awareness","Drive Sales","Grow Followers","Educate Audience","Launch Product","Build Community"];
+const DURATIONS=["30 Days","60 Days","90 Days"];
+const TONES=["Professional","Casual & Fun","Inspirational","Educational","Bold & Direct"];
+
+function Badge({label,color}){return <span style={{display:"inline-flex",alignItems:"center",padding:"3px 10px",borderRadius:999,fontSize:11,fontWeight:600,background:`${color}1A`,color,border:`1px solid ${color}35`}}>{label}</span>;}
+
+function Chip({label,selected,onClick,color}){
+  return(
+    <button onClick={onClick} style={{padding:"8px 15px",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:500,background:selected?color:C.surfaceUp,color:selected?"#fff":C.textSub,border:`1px solid ${selected?color:C.border}`,transition:"all .15s",outline:"none"}}
+      onMouseEnter={e=>{if(!selected){e.currentTarget.style.borderColor=color+"88";e.currentTarget.style.color=C.text;}}}
+      onMouseLeave={e=>{if(!selected){e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.textSub;}}}>
+      {label}
+    </button>
+  );
+}
+
+function Sel({label,value,onChange,options}){
+  return(
+    <div>
+      <label style={{display:"block",fontSize:11,fontWeight:600,color:C.textMuted,letterSpacing:".08em",textTransform:"uppercase",marginBottom:7}}>{label}</label>
+      <div style={{position:"relative"}}>
+        <select value={value} onChange={e=>onChange(e.target.value)}
+          style={{width:"100%",padding:"11px 36px 11px 13px",background:C.surfaceUp,border:`1px solid ${C.border}`,borderRadius:8,outline:"none",fontSize:13,color:C.text,cursor:"pointer",boxSizing:"border-box"}}
+          onFocus={e=>e.target.style.borderColor=C.violet} onBlur={e=>e.target.style.borderColor=C.border}>
+          {options.map(o=><option key={o} style={{background:C.surface}}>{o}</option>)}
+        </select>
+        <span style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",fontSize:10,color:C.textMuted,pointerEvents:"none"}}>▾</span>
+      </div>
+    </div>
+  );
+}
+
+function PostCard({post,index}){
+  const [copied,setCopied]=useState(false);
+  const color=PC[post.platform]||C.violet;
+  const copy=()=>{
+    navigator.clipboard?.writeText(`${post.title}\n\n${post.caption}\n\n${(post.hashtags||[]).join(" ")}`);
+    setCopied(true);setTimeout(()=>setCopied(false),1800);
+  };
+  return(
+    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:"hidden",animation:`slideIn .3s ${Math.min(index*.05,.4)}s both`,transition:"border-color .2s,transform .2s"}}
+      onMouseEnter={e=>{e.currentTarget.style.borderColor=C.borderUp;e.currentTarget.style.transform="translateY(-2px)";}}
+      onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.transform="translateY(0)";}}>
+      <div style={{height:2,background:color,opacity:.85}}/>
+      <div style={{padding:"16px 17px"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:11}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{width:29,height:29,borderRadius:7,background:`${color}18`,border:`1px solid ${color}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color}}>{PI[post.platform]||"◉"}</div>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color}}>{post.platform}</div>
+              <div style={{fontSize:10,color:C.textMuted,marginTop:1}}>Day {post.day}</div>
+            </div>
+          </div>
+          <Badge label={post.type||"Post"} color={color}/>
+        </div>
+        <div style={{fontSize:14,fontWeight:600,color:C.text,marginBottom:7,lineHeight:1.4,fontFamily:"'Outfit',sans-serif"}}>{post.title}</div>
+        <div style={{fontSize:12.5,color:C.textSub,lineHeight:1.75,marginBottom:11,whiteSpace:"pre-line"}}>{post.caption}</div>
+        {(post.hashtags||[]).length>0&&(
+          <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:13}}>
+            {post.hashtags.slice(0,6).map(h=><span key={h} style={{fontSize:10,fontWeight:500,color,background:`${color}12`,padding:"2px 8px",borderRadius:4}}>{h}</span>)}
+          </div>
+        )}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingTop:10,borderTop:`1px solid ${C.border}`}}>
+          <span style={{fontSize:11,color:C.textMuted}}>{post.bestTime||"Best time: 9–11 am"}</span>
+          <button onClick={copy} style={{padding:"5px 11px",borderRadius:6,cursor:"pointer",outline:"none",background:copied?`${C.green}18`:"none",border:`1px solid ${copied?C.green+"55":C.border}`,color:copied?C.green:C.textMuted,fontSize:11,fontWeight:500,transition:"all .2s"}}>
+            {copied?"✓ Copied":"Copy"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WeekGroup({week,posts}){
+  return(
+    <div style={{marginBottom:30}}>
+      <div style={{display:"flex",alignItems:"center",gap:11,marginBottom:13}}>
+        <span style={{fontSize:11,fontWeight:700,color:C.textMuted,letterSpacing:".12em",textTransform:"uppercase"}}>Week {week}</span>
+        <div style={{flex:1,height:1,background:C.border}}/>
+        <span style={{fontSize:11,color:C.textMuted}}>{posts.length} posts</span>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:11}}>
+        {posts.map((p,i)=><PostCard key={i} post={p} index={i}/>)}
+      </div>
+    </div>
+  );
+}
+
+function Loader(){
+  return(
+    <div style={{textAlign:"center",padding:"72px 0"}}>
+      <div style={{width:42,height:42,border:`2px solid ${C.border}`,borderTopColor:C.violet,borderRadius:"50%",margin:"0 auto 26px",animation:"spin .9s linear infinite"}}/>
+      <div style={{fontFamily:"'Outfit',sans-serif",fontSize:21,fontWeight:600,color:C.text,marginBottom:10}}>Crafting your calendar…</div>
+      <div style={{fontSize:13,color:C.textMuted,lineHeight:2}}>
+        {["Generating post ideas","Writing captions","Selecting hashtags"].map((s,i)=>(
+          <div key={s} style={{animation:`pulse ${1+i*.3}s ease-in-out infinite`,animationDelay:`${i*.2}s`}}>· {s}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [niche,setNiche]=useState("");
+  const [platforms,setPlatforms]=useState(["Instagram"]);
+  const [goal,setGoal]=useState("Brand Awareness");
+  const [duration,setDuration]=useState("30 Days");
+  const [tone,setTone]=useState("Professional");
+  const [loading,setLoading]=useState(false);
+  const [posts,setPosts]=useState(null);
+  const [error,setError]=useState("");
+
+  const toggle=p=>setPlatforms(prev=>prev.includes(p)?prev.filter(x=>x!==p):[...prev,p]);
+
+  const generate=async()=>{
+    if(!niche.trim()){setError("Enter your niche or brand.");return;}
+    if(!platforms.length){setError("Select at least one platform.");return;}
+    setError("");setLoading(true);setPosts(null);
+    const days=duration==="30 Days"?30:duration==="60 Days"?60:90;
+    const count=Math.min(Math.floor((days/7)*2*platforms.length),18);
+    try{
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",max_tokens:1000,
+        messages:[{role:"user",content:`You are a social media strategist. Niche: ${niche}. Platforms: ${platforms.join(", ")}. Goal: ${goal}. Duration: ${duration}. Tone: ${tone}.\n\nGenerate ${count} posts. Respond ONLY with valid JSON, no markdown:\n{"posts":[{"day":<1-${days}>,"platform":"<${platforms.join("|")}>","type":"<Story|Carousel|Reel|Post|Thread|Video|Poll>","title":"<8 words max>","caption":"<2-4 sentence caption>","hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5"],"bestTime":"<e.g. Best time: Tue 10am>"}],"strategy":"<2-sentence tip>"}`}]
+      })});
+      const d=await res.json();
+      const txt=(d.content||[]).map(b=>b.text||"").join("");
+      setPosts(JSON.parse(txt.replace(/```json|```/g,"").trim()));
+    }catch{setError("Generation failed — please try again.");}
+    setLoading(false);
+  };
+
+  const exportCSV=()=>{
+    if(!posts?.posts)return;
+    const rows=[["Day","Platform","Type","Title","Caption","Hashtags","Best Time"],...posts.posts.map(p=>[p.day,p.platform,p.type,p.title,`"${p.caption.replace(/"/g,'""')}"`, (p.hashtags||[]).join(" "),p.bestTime||""])];
+    const blob=new Blob([rows.map(r=>r.join(",")).join("\n")],{type:"text/csv"});
+    const a=Object.assign(document.createElement("a"),{href:URL.createObjectURL(blob),download:"content-calendar.csv"});
+    a.click();
+  };
+
+  const grouped={};
+  if(posts?.posts)posts.posts.forEach(p=>{const wk=Math.ceil(p.day/7);(grouped[wk]||(grouped[wk]=[])).push(p);});
+
+  const Btn=({onClick,children,color=C.violet,ghost=false,full=true})=>(
+    <button onClick={onClick} style={{width:full?"100%":"auto",padding:"12px 22px",borderRadius:9,border:ghost?`1px solid ${C.border}`:"none",background:ghost?"none":color,color:ghost?C.textSub:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",transition:"all .18s",outline:"none"}}
+      onMouseEnter={e=>{if(ghost){e.currentTarget.style.borderColor=C.borderUp;e.currentTarget.style.color=C.text;e.currentTarget.style.background=C.surfaceUp;}else{e.currentTarget.style.filter="brightness(1.1)";e.currentTarget.style.transform="translateY(-1px)";}}}
+      onMouseLeave={e=>{if(ghost){e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.textSub;e.currentTarget.style.background="none";}else{e.currentTarget.style.filter="brightness(1)";e.currentTarget.style.transform="translateY(0)";}}}
+    >{children}</button>
+  );
+
+  return(
+    <div style={{minHeight:"100vh",background:C.bg}}>
+      <nav style={{height:54,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 20px",borderBottom:`1px solid ${C.border}`,background:C.surface,position:"sticky",top:0,zIndex:100}}>
+        <div style={{display:"flex",alignItems:"center",gap:9}}>
+          <div style={{width:28,height:28,borderRadius:8,background:`linear-gradient(135deg,${C.violet},${C.rose})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:"#fff"}}>◈</div>
+          <span style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:17,color:C.text}}>ContentCal</span>
+          <span style={{fontSize:11,color:C.textMuted,marginLeft:2}}>AI</span>
+        </div>
+        {posts&&<Btn onClick={exportCSV} ghost full={false}>↓ Export CSV</Btn>}
+      </nav>
+
+      <div style={{maxWidth:860,margin:"0 auto",padding:"32px 16px 80px"}}>
+
+        {!posts&&!loading&&(
+          <div style={{animation:"fadeUp .45s both"}}>
+            <div style={{borderRadius:14,padding:"32px 32px 28px",marginBottom:22,background:C.surface,border:`1px solid ${C.border}`,position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:-50,right:-50,width:240,height:240,borderRadius:"50%",background:`radial-gradient(circle,${C.violet}16,transparent 70%)`,pointerEvents:"none"}}/>
+              <div style={{position:"absolute",bottom:-30,left:30,width:160,height:160,borderRadius:"50%",background:`radial-gradient(circle,${C.rose}10,transparent 70%)`,pointerEvents:"none"}}/>
+              <div style={{fontSize:11,fontWeight:700,color:C.violet,letterSpacing:".14em",textTransform:"uppercase",marginBottom:14}}>Content Strategy · AI-Powered</div>
+              <h1 style={{fontFamily:"'Outfit',sans-serif",fontSize:"clamp(24px,4vw,42px)",fontWeight:800,color:C.text,letterSpacing:"-1.5px",lineHeight:1.1,marginBottom:12}}>
+                Your 30–90 day content<br/>
+                <span style={{color:C.violetSoft}}>calendar, written in seconds.</span>
+              </h1>
+              <p style={{fontSize:14,color:C.textSub,lineHeight:1.75,maxWidth:460}}>Enter your niche and goals. Get ready-to-post captions, hashtags, and optimal timing — exportable to CSV.</p>
+            </div>
+
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,padding:"26px 26px 30px"}}>
+              <div style={{marginBottom:22}}>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:C.textMuted,letterSpacing:".08em",textTransform:"uppercase",marginBottom:7}}>Your Niche or Brand</label>
+                <input value={niche} onChange={e=>setNiche(e.target.value)} placeholder="e.g. Sustainable fashion brand for Gen Z women"
+                  style={{width:"100%",padding:"12px 14px",background:C.surfaceUp,border:`1px solid ${C.border}`,borderRadius:8,outline:"none",fontSize:14,color:C.text,transition:"border-color .15s",boxSizing:"border-box"}}
+                  onFocus={e=>e.target.style.borderColor=C.violet} onBlur={e=>e.target.style.borderColor=C.border}/>
+              </div>
+
+              <div style={{marginBottom:22}}>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:C.textMuted,letterSpacing:".08em",textTransform:"uppercase",marginBottom:9}}>Platforms</label>
+                <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+                  {PLATFORMS.map(p=><Chip key={p} label={p} selected={platforms.includes(p)} onClick={()=>toggle(p)} color={PC[p]||C.violet}/>)}
+                </div>
+              </div>
+
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:26}}>
+                <Sel label="Primary Goal"  value={goal}     onChange={setGoal}     options={GOALS}/>
+                <Sel label="Duration"      value={duration} onChange={setDuration} options={DURATIONS}/>
+                <Sel label="Content Tone"  value={tone}     onChange={setTone}     options={TONES}/>
+              </div>
+
+              {error&&<p style={{fontSize:12,color:C.rose,marginBottom:13,fontWeight:500}}>{error}</p>}
+              <Btn onClick={generate}>Generate My Calendar →</Btn>
+            </div>
+          </div>
+        )}
+
+        {loading&&<Loader/>}
+
+        {posts&&!loading&&(
+          <div style={{animation:"fadeIn .4s both"}}>
+            <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:"17px 21px",marginBottom:22,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+              <div>
+                <div style={{fontFamily:"'Outfit',sans-serif",fontSize:18,fontWeight:700,color:C.text,marginBottom:3}}>Your {duration} Content Calendar</div>
+                <div style={{fontSize:12,color:C.textMuted}}>{posts.posts?.length} posts · {platforms.join(", ")} · {goal}</div>
+              </div>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{platforms.map(p=><Badge key={p} label={p} color={PC[p]||C.violet}/>)}</div>
+            </div>
+
+            {posts.strategy&&(
+              <div style={{background:C.violetDim,border:`1px solid ${C.violet}28`,borderLeft:`3px solid ${C.violet}`,borderRadius:8,padding:"12px 15px",marginBottom:22,fontSize:13,color:C.textSub,lineHeight:1.7}}>
+                <span style={{color:C.violetSoft,fontWeight:600}}>Strategy tip: </span>{posts.strategy}
+              </div>
+            )}
+
+            {Object.entries(grouped).sort(([a],[b])=>+a-+b).map(([wk,ps])=><WeekGroup key={wk} week={wk} posts={ps}/>)}
+
+            <Btn onClick={()=>{setPosts(null);setNiche("");}} ghost>← Generate Another Calendar</Btn>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
