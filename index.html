@@ -155,14 +155,25 @@ function App(){
     const days=duration==="30 Days"?30:duration==="60 Days"?60:90;
     const count=Math.min(Math.floor((days/7)*2*platforms.length),18);
     try{
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-        model:"claude-sonnet-4-20250514",max_tokens:1000,
-        messages:[{role:"user",content:`You are a social media strategist. Niche: ${niche}. Platforms: ${platforms.join(", ")}. Goal: ${goal}. Duration: ${duration}. Tone: ${tone}.\n\nGenerate ${count} posts. Respond ONLY with valid JSON, no markdown:\n{"posts":[{"day":<1-${days}>,"platform":"<${platforms.join("|")}>","type":"<Story|Carousel|Reel|Post|Thread|Video|Poll>","title":"<8 words max>","caption":"<2-4 sentence caption>","hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5"],"bestTime":"<e.g. Best time: Tue 10am>"}],"strategy":"<2-sentence tip>"}`}]
-      })});
+      const res=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "x-api-key": window.ANTHROPIC_API_KEY || "",
+          "anthropic-version":"2023-06-01",
+          "anthropic-dangerous-direct-browser-access":"true"
+        },
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:4000,
+          messages:[{role:"user",content:`You are a social media strategist. Niche: ${niche}. Platforms: ${platforms.join(", ")}. Goal: ${goal}. Duration: ${duration}. Tone: ${tone}.\n\nGenerate ${count} posts. Respond ONLY with valid JSON, no markdown:\n{"posts":[{"day":<1-${days}>,"platform":"<${platforms.join("|")}>","type":"<Story|Carousel|Reel|Post|Thread|Video|Poll>","title":"<8 words max>","caption":"<2-4 sentence caption>","hashtags":["#tag1","#tag2","#tag3","#tag4","#tag5"],"bestTime":"<e.g. Best time: Tue 10am>"}],"strategy":"<2-sentence tip>"}`}]
+        })
+      });
       const d=await res.json();
+      if(d.error){setError("Generation failed: "+d.error.message);setLoading(false);return;}
       const txt=(d.content||[]).map(b=>b.text||"").join("");
       setPosts(JSON.parse(txt.replace(/```json|```/g,"").trim()));
-    }catch{setError("Generation failed — please try again.");}
+    }catch(e){setError("Generation failed — please try again.");}
     setLoading(false);
   };
 
@@ -211,6 +222,17 @@ function App(){
             </div>
 
             <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,padding:"26px 26px 30px"}}>
+
+              {/* API Key input */}
+              <div style={{marginBottom:22}}>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:C.textMuted,letterSpacing:".08em",textTransform:"uppercase",marginBottom:7}}>Anthropic API Key</label>
+                <input type="password" placeholder="sk-ant-..."
+                  onChange={e=>{window.ANTHROPIC_API_KEY=e.target.value;}}
+                  style={{width:"100%",padding:"12px 14px",background:C.surfaceUp,border:`1px solid ${C.border}`,borderRadius:8,outline:"none",fontSize:14,color:C.text,transition:"border-color .15s",boxSizing:"border-box"}}
+                  onFocus={e=>e.target.style.borderColor=C.violet} onBlur={e=>e.target.style.borderColor=C.border}/>
+                <p style={{fontSize:11,color:C.textMuted,marginTop:5}}>Get your key at <a href="https://console.anthropic.com" target="_blank" style={{color:C.violetSoft}}>console.anthropic.com</a>. It stays in your browser only.</p>
+              </div>
+
               <div style={{marginBottom:22}}>
                 <label style={{display:"block",fontSize:11,fontWeight:600,color:C.textMuted,letterSpacing:".08em",textTransform:"uppercase",marginBottom:7}}>Your Niche or Brand</label>
                 <input value={niche} onChange={e=>setNiche(e.target.value)} placeholder="e.g. Sustainable fashion brand for Gen Z women"
